@@ -114,6 +114,41 @@ public class KebabController {
         return clientInfoList;
     }
 
+    @DeleteMapping("/delete/{clientName}/orders/{orderId}")
+    public ResponseEntity<String> deleteKebab(
+            @PathVariable String clientName,
+            @PathVariable Long orderId) {
+        // Find the client by name
+        Client client = clients.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(clientName))
+                .findFirst()
+                .orElse(null);
+
+        if (client != null) {
+            List<KebabOrder> orders = client.getOrders();
+            Optional<KebabOrder> orderToDelete = orders.stream()
+                    .filter(o -> o.getId().equals(orderId))
+                    .findFirst();
+
+            if (orderToDelete.isPresent()) {
+                // Remove the kebab order from the list
+                orders.remove(orderToDelete.get());
+
+                // Decrement the IDs of orders with IDs greater than the deleted order's ID
+                orders.forEach(order -> {
+                    if (order.getId() > orderToDelete.get().getId()) {
+                        order.decrementId();
+                    }
+                });
+
+                return ResponseEntity.ok("Замовлення клієнта " + clientName + " з ID " + orderId + " видалено.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення з ID " + orderId + " не знайдено.");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
+        }
+    }
     public void setKebabs(List<Kebab> kebabs) {
         this.kebabs = kebabs;
     }

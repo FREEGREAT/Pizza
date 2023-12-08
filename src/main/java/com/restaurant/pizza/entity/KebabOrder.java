@@ -20,14 +20,15 @@ public class KebabOrder {
         this.additionalIngredients = additionalIngredients;
     }
 
-
+    public void decrementId() {
+        if (this.id > 0) {
+            this.id--;
+        }
+    }
     @Override
     public String toString() {
         return "Замовлення: " + kebab.getType() +
                 ", Ціна: " + kebab.getPrice() +
                 ", Додаткові інгредієнти: " + additionalIngredients;
     }
-
-
-    ;
 }
