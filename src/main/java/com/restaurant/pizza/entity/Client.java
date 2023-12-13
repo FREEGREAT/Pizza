@@ -54,4 +54,8 @@ public class Client {
     public void placeOrder(KebabOrder order) {
         orders.add(order);
     }
+
+    public boolean isRegistered() {
+        return this.email != null;
+    }
 }

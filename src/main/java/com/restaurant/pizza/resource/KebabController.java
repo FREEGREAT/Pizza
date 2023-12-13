@@ -4,15 +4,14 @@ import com.restaurant.pizza.entity.Client;
 import com.restaurant.pizza.entity.ConfirmedOrder;
 import com.restaurant.pizza.entity.Kebab;
 import com.restaurant.pizza.entity.KebabOrder;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,6 +31,16 @@ public class KebabController {
     public ResponseEntity<String> createClient(
             @RequestParam String name,
             @RequestParam String email) {
+
+        Client existingClient = clients.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+
+        if (existingClient != null) {
+            return ResponseEntity.ok("Клієнт " + existingClient.getName() + " вже зареєстрований");
+        }
+
         Client client = new Client(name, email);
 
         if (isValidEmail(client.getEmail())) {
@@ -41,6 +50,45 @@ public class KebabController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Невірний формат електронної пошти");
         }
     }
+
+//    private ResponseEntity<String> sendEmail(String to, String subject, String messageText) {
+//        Properties properties = new Properties();
+//        properties.put("mail.smtp.auth", "true");
+//        properties.put("mail.smtp.starttls.enable", "true");
+//        properties.put("mail.smtp.host", "sandbox.smtp.mailtrap.io");
+//        properties.put("mail.smtp.port", "2525");
+//
+//        Session session = Session.getInstance(properties, new Authenticator() {
+//            @Override
+//            protected PasswordAuthentication getPasswordAuthentication() {
+//                return new PasswordAuthentication("4c2b6babb6f257", "8cfe1f58dccf35");
+//            }
+//        });
+//
+//        try {
+//            Message message = new MimeMessage(session);
+//            message.setFrom(new InternetAddress("nazarkuryshchuk8@gmail.com")); // Замініть на вашу електронну адресу
+//            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+//            message.setSubject(subject);
+//            message.setText(messageText);
+//
+//            Transport.send(message);
+//
+//            System.out.println("Email sent successfully.");
+//
+//
+//        } catch (MessagingException e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("Помилка відправлення електронної пошти: " + e.getMessage());
+//        }
+//        return null;
+//    }
+//    public boolean isRegistered(String clientName) {
+//        return clients.stream()
+//                .anyMatch(client -> client.getName().equalsIgnoreCase(clientName));
+//    }
+
 
     @PostMapping("/client/{clientName}/order")
     public ResponseEntity<String> orderKebabForClient(
@@ -56,6 +104,15 @@ public class KebabController {
                     return newClient;
                 });
 
+        // Перевірка, чи клієнт вже зареєстрований
+//        if (!client.isRegistered()) {
+//            sendEmail(client.getEmail(), "Реєстрація в системі",
+//                    "Ви зареєстровані в системі. Очікуйте на наші смачні кебаби!");
+//
+//            // Позначте клієнта як зареєстрованого
+//            client.setRegistered(true);
+//        }
+
         Kebab orderedKebab = kebabs.stream()
                 .filter(kebab -> kebab.getType().equalsIgnoreCase(type))
                 .findFirst()
@@ -63,13 +120,13 @@ public class KebabController {
 
         if (orderedKebab != null) {
             client.addToCart(orderedKebab, additionalIngredients);
-           // client.placeOrder(new KebabOrder(orderedKebab, additionalIngredients));
 
             return ResponseEntity.ok("Кебаб додано до корзини та замовлено для клієнта " + clientName);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Кебаб з типом " + type + " не знайдено в меню.");
         }
     }
+
 
     private boolean isValidEmail(String email) {
         String regex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
@@ -95,10 +152,10 @@ public class KebabController {
         }
     }
 
-    @PutMapping("/update/{clientName}/orders/{orderId}")
+    @PutMapping("/update/{clientName}/cart/{cartId}")
     public ResponseEntity<String> updateClientOrder(
             @PathVariable String clientName,
-            @PathVariable Long orderId,
+            @PathVariable Long cartId,
             @RequestParam String type,
             @RequestParam Double price,
             @RequestParam List<String> additionalIngredients) {
@@ -111,7 +168,7 @@ public class KebabController {
         if (client != null) {
             List<KebabOrder> orders = client.getOrders();
             Optional<KebabOrder> orderToUpdate = orders.stream()
-                    .filter(o -> o.getId().equals(orderId))
+                    .filter(o -> o.getId().equals(cartId))
                     .findFirst();
 
             if (orderToUpdate.isPresent()) {
@@ -129,7 +186,7 @@ public class KebabController {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Підтверджене замовлення не можна редагувати.");
                 }
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення з ID " + orderId + " не знайдено.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення з ID " + cartId + " не знайдено.");
             }
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
