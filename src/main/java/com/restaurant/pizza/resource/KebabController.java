@@ -95,8 +95,9 @@ public class KebabController {
         }
     }
 
-    @PutMapping("/update/{clientName}/orders/{orderId}")
-    public ResponseEntity<String> updateClientOrder(
+
+    @PutMapping("/client/{clientName}/cart/update/{orderId}")
+    public ResponseEntity<String> updateCartItem(
             @PathVariable String clientName,
             @PathVariable Long orderId,
             @RequestParam(required = false) String type,
@@ -109,33 +110,25 @@ public class KebabController {
                 .orElse(null);
 
         if (client != null) {
-            List<KebabOrder> orders = client.getOrders();
-            Optional<KebabOrder> orderToUpdate = orders.stream()
-                    .filter(o -> o.getId().equals(orderId))
+            Optional<KebabOrder> cartItem = client.getCartItems().stream()
+                    .filter(kebabOrder -> kebabOrder.getId().equals(orderId))
                     .findFirst();
 
-            if (orderToUpdate.isPresent()) {
-                KebabOrder order = orderToUpdate.get();
+            if (cartItem.isPresent()) {
+                // Оновлюємо дані замовлення
+                KebabOrder updatedKebabOrder = cartItem.get();
+                updatedKebabOrder.getKebab().setType(type);
 
-                // Перевірка, чи замовлення ще не підтверджено
-                if (!order.isConfirmed()) {
-                    // Оновлення полів замовлення
-                    if (type != null) {
-                        order.getKebab().setType(type);
-                    }
-                    if (price != null) {
-                        order.getKebab().setPrice(price);
-                    }
-                    if (additionalIngredients != null) {
-                        order.setAdditionalIngredients(additionalIngredients);
-                    }
-
-                    return ResponseEntity.ok("Замовлення клієнта " + clientName + " оновлено: " + order);
-                } else {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Підтверджене замовлення не можна редагувати.");
+                // Перевірка, чи передано значення ціни
+                if (price != null) {
+                    updatedKebabOrder.getKebab().setPrice(price);
                 }
+
+                updatedKebabOrder.setAdditionalIngredients(additionalIngredients);
+
+                return ResponseEntity.ok("Замовлення в корзині клієнта " + clientName + " оновлено: " + updatedKebabOrder);
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення з ID " + orderId + " не знайдено.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення в корзині з ID " + orderId + " не знайдено.");
             }
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
