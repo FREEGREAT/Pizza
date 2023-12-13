@@ -10,14 +10,14 @@ import java.util.concurrent.atomic.AtomicLong;
 @Setter
 @AllArgsConstructor
 public class KebabOrder {
-    private static Long idCounter = 1L;
+    private static final AtomicLong idCounter = new AtomicLong(1);
 
     private Kebab kebab;
     private Long id;
     private boolean confirmed;
     private List<String> additionalIngredients;
     public KebabOrder(Kebab kebab, List<String> additionalIngredients) {
-        this.id = idCounter++;
+        this.id = generateUniqueId();
         this.kebab = kebab;
         this.additionalIngredients = additionalIngredients;
         this.confirmed = false;
@@ -35,7 +35,9 @@ public class KebabOrder {
                 ", Додаткові інгредієнти: " + additionalIngredients;
     }
 
-
+    private Long generateUniqueId() {
+        return idCounter.getAndIncrement();
+    }
 
 
 

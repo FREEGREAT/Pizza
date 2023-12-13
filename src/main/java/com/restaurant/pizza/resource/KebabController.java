@@ -95,13 +95,13 @@ public class KebabController {
         }
     }
 
-    @PutMapping("/update/{clientName}/orders/{orderId}")
+    @PostMapping("/update/{clientName}/orders/{orderId}")
     public ResponseEntity<String> updateClientOrder(
             @PathVariable String clientName,
             @PathVariable Long orderId,
-            @RequestParam String type,
-            @RequestParam Double price,
-            @RequestParam List<String> additionalIngredients) {
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Double price,
+            @RequestParam(required = false) List<String> additionalIngredients) {
 
         Client client = clients.stream()
                 .filter(c -> c.getName().equalsIgnoreCase(clientName))
@@ -120,9 +120,15 @@ public class KebabController {
                 // Перевірка, чи замовлення ще не підтверджено
                 if (!order.isConfirmed()) {
                     // Оновлення полів замовлення
-                    order.getKebab().setType(type);
-                    order.getKebab().setPrice(price);
-                    order.setAdditionalIngredients(additionalIngredients);
+                    if (type != null) {
+                        order.getKebab().setType(type);
+                    }
+                    if (price != null) {
+                        order.getKebab().setPrice(price);
+                    }
+                    if (additionalIngredients != null) {
+                        order.setAdditionalIngredients(additionalIngredients);
+                    }
 
                     return ResponseEntity.ok("Замовлення клієнта " + clientName + " оновлено: " + order);
                 } else {
@@ -135,7 +141,6 @@ public class KebabController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
         }
     }
-
 
 
     @GetMapping("/previous-orders")
@@ -181,7 +186,7 @@ public class KebabController {
 
 
     @GetMapping("/client/{clientName}/cart")
-    public List<Kebab> getClientCart(@PathVariable String clientName) {
+    public List<KebabOrder> getClientCart(@PathVariable String clientName) {
         Client client = clients.stream()
                 .filter(c -> c.getName().equalsIgnoreCase(clientName))
                 .findFirst()
@@ -190,31 +195,9 @@ public class KebabController {
         return client != null ? client.getCartItems() : new ArrayList<>();
     }
 
-    @PostMapping("/client/{clientName}/confirm-order")
-    public ResponseEntity<String> confirmOrder(@PathVariable String clientName) {
-        Client client = clients.stream()
-                .filter(c -> c.getName().equalsIgnoreCase(clientName))
-                .findFirst()
-                .orElse(null);
 
-        if (client != null) {
-            List<Kebab> cartItems = client.getCartItems();
-            if (!cartItems.isEmpty()) {
-                List<KebabOrder> orders = cartItems.stream()
-                        .map(kebab -> new KebabOrder(kebab, new ArrayList<>()))
-                        .collect(Collectors.toList());
 
-                client.getOrders().addAll(orders);
-                client.clearCart();
 
-                return ResponseEntity.ok("Замовлення клієнта " + clientName + " підтверджено");
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Корзина клієнта " + clientName + " порожня");
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
-        }
-    }
 
     public void setKebabs(List<Kebab> kebabs) {
         this.kebabs = kebabs;

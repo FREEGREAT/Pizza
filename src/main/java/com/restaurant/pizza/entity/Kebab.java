@@ -1,14 +1,15 @@
 package com.restaurant.pizza.entity;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Kebab {
     private String type;
-    private double price;
+    private Double price;
     private List<String> additionalIngredients;
+
 }

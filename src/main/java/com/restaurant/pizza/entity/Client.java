@@ -6,6 +6,9 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Data
 @Setter
 @Getter
@@ -14,6 +17,8 @@ import java.util.List;
 public class Client {
     @NotBlank(message = "Ім'я клієнта не може бути порожнім")
     private String name;
+
+
 
     @Email(message = "Невірний формат електронної пошти")
     @NotBlank(message = "Електронна пошта клієнта не може бути порожньою")
@@ -39,19 +44,36 @@ public class Client {
         cart.addItem(kebab);
     }
 
-    public List<Kebab> getCartItems() {
-        return cart.getItems();
+
+    public List<KebabOrder> getCartItems() {
+        return cart.getItems().stream()
+                .map(kebab -> new KebabOrder(kebab, new ArrayList<>()))
+                .collect(Collectors.toList());
     }
+
 
     public void clearCart() {
         cart.clear();
     }
 
+    public void updateCartItem(Long orderId, String type, Double price, List<String> additionalIngredients) {
+        Optional<KebabOrder> orderToUpdate = orders.stream()
+                .filter(o -> o.getId().equals(orderId))
+                .findFirst();
+
+        if (orderToUpdate.isPresent()) {
+            KebabOrder order = orderToUpdate.get();
+            order.getKebab().setType(type);
+            order.getKebab().setPrice(price);
+            order.setAdditionalIngredients(additionalIngredients);
+        }
+    }
+
+
+
     public List<KebabOrder> getOrders() {
         return orders;
     }
 
-    public void placeOrder(KebabOrder order) {
-        orders.add(order);
+
     }
-}
