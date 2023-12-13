@@ -95,7 +95,7 @@ public class KebabController {
         }
     }
 
-    @PostMapping("/update/{clientName}/orders/{orderId}")
+    @PutMapping("/update/{clientName}/orders/{orderId}")
     public ResponseEntity<String> updateClientOrder(
             @PathVariable String clientName,
             @PathVariable Long orderId,
