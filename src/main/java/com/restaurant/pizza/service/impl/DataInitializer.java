@@ -21,7 +21,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Додайте кебаби до меню при запуску сервера
         List<Kebab> initialKebabs = new ArrayList<>();
         initialKebabs.add(new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки")));
         initialKebabs.add(new Kebab("Класичний кебаб", 7.99, List.of("Цибуля", "Перець", "Соус")));
