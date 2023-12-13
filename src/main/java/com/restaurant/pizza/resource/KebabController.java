@@ -1,18 +1,12 @@
 package com.restaurant.pizza.resource;
 
-import com.restaurant.pizza.entity.Client;
-import com.restaurant.pizza.entity.ConfirmedOrder;
-import com.restaurant.pizza.entity.Kebab;
-import com.restaurant.pizza.entity.KebabOrder;
+import com.restaurant.pizza.entity.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -21,7 +15,6 @@ public class KebabController {
 
     private List<Kebab> kebabs = new ArrayList<>();
     private List<Client> clients = new ArrayList<>();
-
 
     @GetMapping("/menu")
     public List<Kebab> getMenu() {
@@ -32,14 +25,12 @@ public class KebabController {
     public ResponseEntity<String> createClient(
             @RequestParam String name,
             @RequestParam String email) {
-        Client client = new Client(name, email);
-
-        if (isValidEmail(client.getEmail())) {
-            clients.add(client);
-            return ResponseEntity.ok("Клієнт " + client.getName() + " створено");
-        } else {
+        if (!isValidEmail(email)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Невірний формат електронної пошти");
         }
+
+        clients.add(new Client(name, email));
+        return ResponseEntity.ok("Клієнт " + name + " створено");
     }
 
     @PostMapping("/client/{clientName}/order")
@@ -47,6 +38,7 @@ public class KebabController {
             @PathVariable String clientName,
             @RequestParam String type,
             @RequestParam List<String> additionalIngredients) {
+
         Client client = clients.stream()
                 .filter(c -> c.getName().equalsIgnoreCase(clientName))
                 .findFirst()
@@ -56,20 +48,19 @@ public class KebabController {
                     return newClient;
                 });
 
-        Kebab orderedKebab = kebabs.stream()
+        Optional<Kebab> orderedKebab = kebabs.stream()
                 .filter(kebab -> kebab.getType().equalsIgnoreCase(type))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
 
-        if (orderedKebab != null) {
-            client.addToCart(orderedKebab, additionalIngredients);
-           // client.placeOrder(new KebabOrder(orderedKebab, additionalIngredients));
-
+        if (orderedKebab.isPresent()) {
+            KebabOrder kebabOrder = new KebabOrder(orderedKebab.get(), additionalIngredients);
+            client.addToCart(kebabOrder);
             return ResponseEntity.ok("Кебаб додано до корзини та замовлено для клієнта " + clientName);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Кебаб з типом " + type + " не знайдено в меню.");
         }
     }
+
 
     private boolean isValidEmail(String email) {
         String regex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
@@ -84,22 +75,18 @@ public class KebabController {
                 .orElse(null);
 
         if (client != null) {
-            List<ConfirmedOrder> confirmedOrders = new ArrayList<>();
-            for (KebabOrder kebabOrder : client.getOrders()) {
-                ConfirmedOrder confirmedOrder = new ConfirmedOrder(kebabOrder.getKebab(), client.getName());
-                confirmedOrders.add(confirmedOrder);
-            }
-            return confirmedOrders;
+            return client.getOrders().stream()
+                    .map(kebabOrder -> new ConfirmedOrder(kebabOrder.getKebab(), clientName))
+                    .collect(Collectors.toList());
         } else {
             return Collections.emptyList();
         }
     }
 
-
-    @PutMapping("/client/{clientName}/cart/update/{orderId}")
+    @PutMapping("/client/{clientName}/cart/{cartItemId}")
     public ResponseEntity<String> updateCartItem(
             @PathVariable String clientName,
-            @PathVariable Long orderId,
+            @PathVariable Long cartItemId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Double price,
             @RequestParam(required = false) List<String> additionalIngredients) {
@@ -111,13 +98,15 @@ public class KebabController {
 
         if (client != null) {
             Optional<KebabOrder> cartItem = client.getCartItems().stream()
-                    .filter(kebabOrder -> kebabOrder.getId().equals(orderId))
+                    .filter(kebabOrder -> kebabOrder.getId().equals(cartItemId))
                     .findFirst();
 
             if (cartItem.isPresent()) {
                 // Оновлюємо дані замовлення
                 KebabOrder updatedKebabOrder = cartItem.get();
-                updatedKebabOrder.getKebab().setType(type);
+                if (type != null) {
+                    updatedKebabOrder.getKebab().setType(type);
+                }
 
                 // Перевірка, чи передано значення ціни
                 if (price != null) {
@@ -128,55 +117,84 @@ public class KebabController {
 
                 return ResponseEntity.ok("Замовлення в корзині клієнта " + clientName + " оновлено: " + updatedKebabOrder);
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення в корзині з ID " + orderId + " не знайдено.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення в корзині з ID " + cartItemId + " не знайдено.");
             }
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
         }
     }
 
+    @DeleteMapping("/client/{clientName}/cart/clear")
+    public ResponseEntity<String> clearCart(@PathVariable String clientName) {
+        Client client = clients.stream()
+                  .filter(c -> c.getName().equalsIgnoreCase(clientName))
+                  .findFirst()
+                  .orElse(null);
+        client.clearCart();
+        return ResponseEntity.ok("Замовлення в корзині клієнта " + clientName + " очищена ");
+    }
 
     @GetMapping("/previous-orders")
     public List<Client> getAllClients() {
         return clients;
     }
-
-
-    @DeleteMapping("/delete/{clientName}/orders/{orderId}")
-    public ResponseEntity<String> deleteKebab(
-            @PathVariable String clientName,
-            @PathVariable Long orderId) {
-        // Find the client by name
+    @PostMapping("/client/{clientName}/confirm-order")
+    public ResponseEntity<String> confirmOrder(@PathVariable String clientName) {
         Client client = clients.stream()
                 .filter(c -> c.getName().equalsIgnoreCase(clientName))
                 .findFirst()
                 .orElse(null);
 
         if (client != null) {
-            List<KebabOrder> orders = client.getOrders();
-            Optional<KebabOrder> orderToDelete = orders.stream()
-                    .filter(o -> o.getId().equals(orderId))
-                    .findFirst();
+            client.confirmOrder();
 
-            if (orderToDelete.isPresent()) {
-                orders.remove(orderToDelete.get());
+            // Встановлення confirmed в true для всіх підтверджених замовлень
+            client.getConfirmedOrders().forEach(order -> order.setConfirmed(true));
 
-                orders.forEach(order -> {
-                    if (order.getId() > orderToDelete.get().getId()) {
-                        order.decrementId();
-                    }
-                });
-
-                return ResponseEntity.ok("Замовлення клієнта " + clientName + " з ID " + orderId + " видалено.");
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення з ID " + orderId + " не знайдено.");
-            }
+            return ResponseEntity.ok("Замовлення клієнта " + clientName + " підтверджено.");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
         }
     }
 
 
+    @DeleteMapping("/delete/{clientName}/cart/{cartId}")
+    public ResponseEntity<String> deleteKebab(
+            @PathVariable String clientName,
+            @PathVariable Long cartId) {
+
+        Client client = clients.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(clientName))
+                .findFirst()
+                .orElse(null);
+
+        if (client != null) {
+            List<KebabOrder> cartItems = client.getCartItems();
+            Iterator<KebabOrder> iterator = cartItems.iterator();
+
+            client.removeItemById(cartId);
+
+            while (iterator.hasNext()) {
+                KebabOrder order = iterator.next();
+
+                if (order.getId().equals(cartId)) {
+                    iterator.remove();
+                    reassignOrderIds(cartItems);
+                    return ResponseEntity.ok("Замовлення клієнта " + clientName + " з ID " + cartId + " видалено з корзини.");
+                }
+            }
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Замовлення з ID " + cartId + " не знайдено в корзині.");
+        } else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Клієнта з ім'ям " + clientName + " не знайдено.");
+        }
+    }
+
+    private void reassignOrderIds(List<KebabOrder> orders) {
+        for (int i = 0; i < orders.size(); i++) {
+            orders.get(i).setId(Long.valueOf(i + 1));
+        }
+    }
 
     @GetMapping("/client/{clientName}/cart")
     public List<KebabOrder> getClientCart(@PathVariable String clientName) {
@@ -188,12 +206,7 @@ public class KebabController {
         return client != null ? client.getCartItems() : new ArrayList<>();
     }
 
-
-
-
-
     public void setKebabs(List<Kebab> kebabs) {
         this.kebabs = kebabs;
     }
-
 }

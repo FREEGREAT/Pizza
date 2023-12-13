@@ -49,6 +49,9 @@ if [ -z "$MAVEN_SKIP_RC" ] ; then
 
 fi
 
+mvn test -DargLine="-XX:+IgnoreUnrecognizedVMOptions -XX:+EnableDynamicAgentLoading"
+
+
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
 darwin=false;

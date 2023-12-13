@@ -24,7 +24,9 @@ public class Cart {
         items.add(kebab);
     }
 
-
+    public void removeItem(Kebab kebab) {
+        items.remove(kebab);
+    }
 
     public List<Kebab> getItems() {
         return items;
@@ -33,5 +35,7 @@ public class Cart {
     public void clear() {
         items.clear();
     }
+
+
 }
 

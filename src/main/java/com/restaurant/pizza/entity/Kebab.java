@@ -12,4 +12,7 @@ public class Kebab {
     private Double price;
     private List<String> additionalIngredients;
 
+    public void decrementId() {
+    }
+
 }
