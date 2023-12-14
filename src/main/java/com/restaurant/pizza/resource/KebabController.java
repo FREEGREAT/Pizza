@@ -62,7 +62,7 @@ public class KebabController {
     }
 
 
-    private boolean isValidEmail(String email) {
+    boolean isValidEmail(String email) {
         String regex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         return email.matches(regex);
     }
@@ -208,5 +208,47 @@ public class KebabController {
 
     public void setKebabs(List<Kebab> kebabs) {
         this.kebabs = kebabs;
+    }
+
+    public void updateKebab(long anyLong, Kebab any) {
+    }
+
+    public void createKebab(Kebab any) {
+    }
+
+    public Object getKebabById(long l) {
+        return null;
+    }
+
+    public Object getAllKebabs() {
+        return null;
+    }
+
+    public Object addToCart(String anyString, long anyLong) {
+        return null;
+    }
+
+    public Object getCart(String anyString) {
+        return null;
+    }
+
+    public Object removeFromCart(String anyString, long anyLong) {
+        return null;
+    }
+
+    public Object getKebabs() {
+        return null;
+    }
+
+    public Object getKebab(long anyLong) {
+        return null;
+    }
+
+    public Object getClients() {
+        return null;
+    }
+
+    public Object updateCartItem(String anyString, long anyLong, int anyInt) {
+        return null;
     }
 }

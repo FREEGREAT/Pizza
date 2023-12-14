@@ -15,4 +15,28 @@ public class Kebab {
     public void decrementId() {
     }
 
+    public void setName(String string) {
+    }
+
+    public void setId(long l) {
+    }
+
+    public void setAdditionalIngredients(String string) {
+    }
+
+    public void setIngredients(String string) {
+    }
+
+    public Object getId() {
+        return null;
+    }
+
+    public Object getName() {
+        return null;
+    }
+
+    public Object getIngredients() {
+        return null;
+    }
+
 }
