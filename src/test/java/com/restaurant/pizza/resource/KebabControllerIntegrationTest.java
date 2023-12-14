@@ -24,6 +24,43 @@ public class KebabControllerIntegrationTest {
     private KebabController kebabController;
 
     @Test
+    public void isValidEmail()  {
+        String email = "nazarkuryshchuk8@gmail.com";
+        when(kebabController.isValidEmail(anyString())).thenReturn(false);
+    }
+
+    @Test
+    public void updateCartItem ()  {
+        String clientName = "Іван";
+        Long kebabId = 1L;
+        List<KebabOrder> cartItems = new ArrayList<>();
+        cartItems.add(new KebabOrder(new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки")), List.of("Салат", "Томати", "Огірки")));
+        cartItems.add(new KebabOrder(new Kebab("Класичний кебаб", 7.99, List.of("Цибуля", "Перець", "Соус")), List.of("Цибуля", "Перець", "Соус")));
+        when(kebabController.updateCartItem(anyString(), anyLong(), anyInt())).thenReturn(ResponseEntity.ok("Кількість кебабу з ID " + kebabId + " в корзині клієнта " + clientName + " змінено на " + 1));
+    }
+
+    @Test
+    public void testSetKebabs()  {
+        List<Kebab> kebabs = new ArrayList<>();
+        kebabs.add(new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки")));
+        kebabs.add(new Kebab("Класичний кебаб", 7.99, List.of("Цибуля", "Перець", "Соус")));
+        doNothing().when(kebabController).setKebabs(anyList());
+    }
+    @Test
+    public void testUpdateKebab()  {
+        Long kebabId = 1L;
+        Kebab kebab = new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки"));
+        doNothing().when(kebabController).updateKebab(anyLong(), any());
+    }
+
+    @Test
+    public void createClient ()  {
+        String clientName = "Андрій";
+        String email = "andree@gmail.com";
+        when(kebabController.createClient(anyString(), anyString())).thenReturn(ResponseEntity.ok("Клієнта " + clientName + " з email " + email + " створено"));
+    }
+
+    @Test
     public void testAddToCart()  {
         String clientName = "Іван";
         Long kebabId = 1L;
@@ -70,42 +107,7 @@ public class KebabControllerIntegrationTest {
         when(kebabController.getClients()).thenReturn(ResponseEntity.ok(clients));
     }
 
-    @Test
-    public void isValidEmail()  {
-        String email = "nazarkuryshchuk8@gmail.com";
-        when(kebabController.isValidEmail(anyString())).thenReturn(false);
-    }
 
-    @Test
-    public void updateCartItem ()  {
-        String clientName = "Іван";
-        Long kebabId = 1L;
-        List<KebabOrder> cartItems = new ArrayList<>();
-        cartItems.add(new KebabOrder(new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки")), List.of("Салат", "Томати", "Огірки")));
-        cartItems.add(new KebabOrder(new Kebab("Класичний кебаб", 7.99, List.of("Цибуля", "Перець", "Соус")), List.of("Цибуля", "Перець", "Соус")));
-        when(kebabController.updateCartItem(anyString(), anyLong(), anyInt())).thenReturn(ResponseEntity.ok("Кількість кебабу з ID " + kebabId + " в корзині клієнта " + clientName + " змінено на " + 1));
-    }
-
-    @Test
-    public void testSetKebabs()  {
-        List<Kebab> kebabs = new ArrayList<>();
-        kebabs.add(new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки")));
-        kebabs.add(new Kebab("Класичний кебаб", 7.99, List.of("Цибуля", "Перець", "Соус")));
-        doNothing().when(kebabController).setKebabs(anyList());
-    }
-    @Test
-    public void testUpdateKebab()  {
-        Long kebabId = 1L;
-        Kebab kebab = new Kebab("Шаурма", 5.99, List.of("Салат", "Томати", "Огірки"));
-        doNothing().when(kebabController).updateKebab(anyLong(), any());
-    }
-
-    @Test
-    public void createClient ()  {
-        String clientName = "Андрій";
-        String email = "andree@gmail.com";
-        when(kebabController.createClient(anyString(), anyString())).thenReturn(ResponseEntity.ok("Клієнта " + clientName + " з email " + email + " створено"));
-    }
 
 
 }
