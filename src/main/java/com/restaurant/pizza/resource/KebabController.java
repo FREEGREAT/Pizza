@@ -2,13 +2,14 @@ package com.restaurant.pizza.resource;
 
 import com.restaurant.pizza.entity.*;
 import jakarta.validation.Valid;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Setter
 @RestController
 @RequestMapping("/kebab")
 public class KebabController {
@@ -55,7 +56,7 @@ public class KebabController {
         if (orderedKebab.isPresent()) {
             KebabOrder kebabOrder = new KebabOrder(orderedKebab.get(), additionalIngredients);
             client.addToCart(kebabOrder);
-            return ResponseEntity.ok("Кебаб додано до корзини та замовлено для клієнта " + clientName);
+            return ResponseEntity.ok("Кебаб додано до корзини " + clientName);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Кебаб з типом " + type + " не знайдено в меню.");
         }
@@ -210,45 +211,4 @@ public class KebabController {
         this.kebabs = kebabs;
     }
 
-    public void updateKebab(long anyLong, Kebab any) {
-    }
-
-    public void createKebab(Kebab any) {
-    }
-
-    public Object getKebabById(long l) {
-        return null;
-    }
-
-    public Object getAllKebabs() {
-        return null;
-    }
-
-    public Object addToCart(String anyString, long anyLong) {
-        return null;
-    }
-
-    public Object getCart(String anyString) {
-        return null;
-    }
-
-    public Object removeFromCart(String anyString, long anyLong) {
-        return null;
-    }
-
-    public Object getKebabs() {
-        return null;
-    }
-
-    public Object getKebab(long anyLong) {
-        return null;
-    }
-
-    public Object getClients() {
-        return null;
-    }
-
-    public Object updateCartItem(String anyString, long anyLong, int anyInt) {
-        return null;
-    }
 }
